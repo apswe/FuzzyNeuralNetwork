@@ -32,7 +32,7 @@ trail = curve(color = color.yellow, radius = 0.01) # units are in meters
 
 # Define parameters
 cart.m = 0.5 # mass of cart in kg
-cart.pos = vector(3, 0.04, 0.08) # initial position of the cart in(x, y, z) form, units are in meters
+cart.pos = vector(1.5, 0.04, 0.08) # initial position of the cart in(x, y, z) form, units are in meters
 cart.v = vector(0, 0, 0) # initial velocity of car in (vx, vy, vz) form, units are m/s
 
 # angle of inclined plane relative to the horizontal
@@ -46,23 +46,26 @@ g = -9.8 # acceleration due to gravity; units are m/s/s
 
 # Define time parameters
 t = 0 # starting time
-deltat = 0.0005  # time step units are s
-
-
+deltat = 0.001  # time step units are s
+period = 1
+maxAngle = 20
+deltaTheta = radians(maxAngle*deltat/period)
+print("Delta theta = {}".format(deltaTheta))
+inclinedPlane.w = (0, 0, 2 * pi / period)
 ### CALCULATION LOOP; perform physics updates and drawing
 # ------------------------------------------------------------------------------------
-
-while cart.pos.y > 0 :  # while the cart's y-position is greater than 0 (above the ground)
-    # Required to make animation visible / refresh smoothly (keeps program from running faster
-
-    #    than 1000 frames/s)
+distText = label(pos=(0,0.25,0), text='This is a box')
+running = True
+while running :  # while the cart's y-position is greater than 0 (above the ground)
     rate(1000)    
-    # Compute Net Force 
-    # set the direction of the net force along the inclined plane
     Fnet = norm(inclinedPlane.axis)
-    # set the magnitude to the component of the gravitational force parallel to the inclined plane
     Fnet.mag = cart.m * g * sin(theta)
-    # Newton's 2nd Law 
+    
+    theta += deltaTheta
+    print("Theta = {}".format(theta))
+    inclinedPlane.rotate(angle = theta, origin = (0, 0, 0), axis = (0,0,1))
+    
+    cart.axis = 0.1 * inclinedPlane.axis.norm()
     cart.v = cart.v + (Fnet/cart.m * deltat)
     # Position update 
     cart.pos = cart.pos + cart.v * deltat
@@ -70,7 +73,12 @@ while cart.pos.y > 0 :  # while the cart's y-position is greater than 0 (above t
     diff = cart.pos - sensor.pos
     pointer.axis = -inclinedPlane.axis.norm() * diff.mag 
     pointer.pos = sensor.pos
-    # Time update 
+    # Time update
+    distText.text = "{:.2f} units".format(diff.mag)
+    if theta >= radians(maxAngle):
+        deltaTheta *= -1
+    if theta <= radians(-maxAngle):
+        deltaTheta *= -1
     t = t + deltat
         
 ### OUTPUT
